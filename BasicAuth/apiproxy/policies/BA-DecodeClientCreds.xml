@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<BasicAuthentication name="BA-DecodeClientCreds">
+  <DisplayName>Decode Client Basic Auth</DisplayName>
+  <Operation>Decode</Operation>
+  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
+  <!-- Source: where to read the raw "Basic <base64>" value from -->
+  <Source>request.header.authorization</Source>
+  <!-- Output: variables that will receive the decoded values -->
+  <User ref="flow.client.username"/>
+  <Password ref="flow.client.password"/>
+</BasicAuthentication>
