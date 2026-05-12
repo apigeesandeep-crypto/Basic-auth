@@ -1,44 +1,49 @@
 name: Apigee CI/CD Deployment
+
 on:
   push:
     branches:
       - test
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write # Required for WIF
+  id-token: write
 
 jobs:
-  build-and-deploy:
+  lint-bundle-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. Apigee Lint
-      # Note: We run this from the folder where 'apiproxy' actually lives
-      - name: Apigee Lint
-        run: |
-          npm install -g apigeelint
-          apigeelint -s ./BasicAuth/apiproxy -f table.js 
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-      # 2. Authenticate to Google Cloud (Keyless)
-      - name: Authenticate to Google Cloud
+      - name: Install Apigee lint
+        run: npm install -g apigeelint
+
+      - name: Run apigeelint
+        run: apigeelint -s ./BasicAuth/apiproxy -f table.js
+
+      - name: Authenticate to Google Cloud via WIF
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          token_format: 'access_token'
-          workload_identity_provider: 'projects/172484352684/locations/global/workloadIdentityPools/apigee-pool/providers/github-provider'
-          service_account: 'apigee-github-deployer@project-231b329b-a80c-4f8d-828.iam.gserviceaccount.com'
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+          token_format: access_token
 
-      # 3. Setup Maven and Deploy
-      # Added -DskipTests and cleaned up deployment options
-      - name: Deploy to Apigee
+      - name: Deploy Apigee proxy with Maven
+        working-directory: ./BasicAuth
         run: |
           mvn clean install -Peval \
             -Dbearer=${{ steps.auth.outputs.access_token }} \
-            -Dorg=project-231b329b-a80c-4f8d-828 \
-            -Denv=eval \
+            -Dorg=${{ vars.APIGEE_ORG }} \
+            -Denv=${{ vars.APIGEE_ENV }} \
             -Dapigee.options=update \
             -DskipTests
-        working-directory: ./BasicAuth
