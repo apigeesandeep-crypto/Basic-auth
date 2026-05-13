@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<VerifyAPIKey name="VerifyAPIKey">
+  <DisplayName>Verify API Key</DisplayName>
+  <!-- The consumer key was decoded from the Basic Auth username field -->
+  <APIKey ref="flow.client.username"/>
+</VerifyAPIKey>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<APIProxy revision="12" name="basic-auth">
+  <DisplayName/>
+  <Description/>
+  <CreatedAt>1778330373714</CreatedAt>
+  <LastModifiedAt>1778330373714</LastModifiedAt>
+  <BasePaths>/basic-auth</BasePaths>
+  <Policies>
+    <Policy>BA-DecodeClientCreds</Policy>
+    <Policy>VerifyAPIKey</Policy>
+    <Policy>KVM-GetBackendCreds</Policy>
+    <Policy>BA-EncodeBackendCreds</Policy>
+  </Policies>
+  <ProxyEndpoints>
+    <ProxyEndpoint>default</ProxyEndpoint>
+  </ProxyEndpoints>
+  <TargetEndpoints>
+    <TargetEndpoint>default</TargetEndpoint>
+  </TargetEndpoints>
+</APIProxy>
