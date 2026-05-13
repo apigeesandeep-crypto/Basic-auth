@@ -1,9 +1,6 @@
 name: Deploy Apigee Proxy
 
-on:
-  push:
-    branches: [ test ]
-  workflow_dispatch:
+on: [push]
 
 permissions:
   contents: read
