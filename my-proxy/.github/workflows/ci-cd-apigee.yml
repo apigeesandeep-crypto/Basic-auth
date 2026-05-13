@@ -1,6 +1,9 @@
 name: Deploy Apigee Proxy
 
-on: [push]
+on:
+  push:
+    branches:
+      - test
 
 permissions:
   contents: read
