@@ -1,50 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>apigee</groupId>
-  <artifactId>my-proxy</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
+    <groupId>com.example.apigee</groupId>
+    <artifactId>basic-auth-proxy</artifactId>
+    <version>1.0.0</version>
+    <packaging>bundle</packaging>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>central</id>
-      <url>https://repo1.maven.org/maven2</url>
-    </pluginRepository>
-  </pluginRepositories>
+    <name>Basic Auth Proxy</name>
+    <description>Apigee Basic Authentication Proxy</description>
 
-  <profiles>
-    <profile>
-      <id>googleapi</id>
-      <activation><activeByDefault>true</activeByDefault></activation>
-      <build>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <apigee.maven.plugin.version>2.4.9</apigee.maven.plugin.version>
+        <apigee.profile.activation.phase>clean</apigee.profile.activation.phase>
+    </properties>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>apigee</id>
+            <name>Apigee Repository</name>
+            <url>https://github.com/apigee/apigee-maven-plugins/raw/master/releases</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <sourceDirectory>my-proxy</sourceDirectory>
         <plugins>
-          <plugin>
-            <groupId>com.apigee.edge.maven</groupId>
-            <artifactId>apigee-deploy-maven-plugin</artifactId>
-            <version>2.4.0</version>
-            <executions>
-              <execution>
-                <id>apigee-deploy</id>
-                <phase>install</phase>
-                <goals><goal>deploy</goal></goals>
-                <configuration>
-                  <apigeeAPIVersion>google</apigeeAPIVersion>
-                  <apigeeEnv>${apigee.env}</apigeeEnv>
-                  <apigeeOrg>${apigee.org}</apigeeOrg>
-                  <googleTokenEmail>${sa.email}</googleTokenEmail>
-                  <serviceAccountFilePath>${sa.key}</serviceAccountFilePath>
-                  <override>true</override>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
+            <plugin>
+                <groupId>io.apigee.build</groupId>
+                <artifactId>apigee-maven-plugin</artifactId>
+                <version>${apigee.maven.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>policy-validate</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>configure</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>policy-package</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>policy-deploy</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
-      </build>
-    </profile>
-  </profiles>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>googleapi</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <apigee.hosturl>https://apigee.googleapis.com</apigee.hosturl>
+                <apigee.apiversion>v1</apigee.apiversion>
+                <apigee.org>${apigee.org}</apigee.org>
+                <apigee.env>${apigee.env}</apigee.env>
+                <apigee.bearer>${bearer}</apigee.bearer>
+            </properties>
+        </profile>
+    </profiles>
 </project>
