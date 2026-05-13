@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write   # Required for keyless auth / OIDC
+  id-token: write   # Required for OIDC
 
 jobs:
   deploy:
@@ -15,17 +15,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug - Start workflow
+        run: echo "🚀 Workflow started"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Keyless auth — exchanges GitHub OIDC token for GCP access token
+      - name: Debug - After checkout
+        run: |
+          echo "✅ Code checked out"
+          echo "📁 Current directory:"
+          pwd
+          echo "📂 Listing files:"
+          ls -R
+
+      # Keyless auth (OIDC)
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SA_EMAIL }}
-          token_format: access_token   # Outputs an access token Maven can use
+          token_format: access_token
+
+      - name: Debug - Auth output check
+        run: |
+          echo "🔐 Auth step completed"
+          echo "Checking if access token exists..."
+          if [ -z "${{ steps.auth.outputs.access_token }}" ]; then
+            echo "❌ ACCESS TOKEN NOT FOUND"
+            exit 1
+          else
+            echo "✅ Access token generated successfully"
+          fi
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -33,17 +55,34 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
+      - name: Debug - Java version
+        run: |
+          echo "☕ Java setup completed"
+          java -version
+          mvn -version || echo "⚠️ Maven not found yet"
+
       - name: Set up Maven cache
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
+      - name: Debug - Before Maven deploy
+        run: |
+          echo "📦 About to run Maven deploy"
+          echo "ORG: ${{ vars.APIGEE_ORG }}"
+          echo "ENV: ${{ vars.APIGEE_ENV }}"
+          echo "SA:  ${{ vars.GCP_SA_EMAIL }}"
+          echo "TOKEN (masked): ${#}"
+
       - name: Deploy proxy via Maven
         run: |
+          echo "🚀 Starting Apigee deployment via Maven"
+
           mvn install -P googleapi \
             -Dapigee.org=${{ vars.APIGEE_ORG }} \
             -Dapigee.env=${{ vars.APIGEE_ENV }} \
             -Dsa.email=${{ vars.GCP_SA_EMAIL }} \
             -Dbearer=${{ steps.auth.outputs.access_token }}
-        # Note: plugin v2.4+ accepts -Dbearer directly for token-based auth
+
+          echo "✅ Maven deploy step finished"
