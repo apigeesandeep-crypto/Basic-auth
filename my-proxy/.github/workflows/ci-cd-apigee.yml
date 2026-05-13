@@ -1,0 +1,49 @@
+name: Deploy Apigee Proxy
+
+on:
+  push:
+    branches: [ test ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # Required for keyless auth / OIDC
+
+jobs:
+  deploy:
+    name: Deploy to Apigee
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Keyless auth — exchanges GitHub OIDC token for GCP access token
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+          token_format: access_token   # Outputs an access token Maven can use
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Set up Maven cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name: Deploy proxy via Maven
+        run: |
+          mvn install -P googleapi \
+            -Dapigee.org=${{ vars.APIGEE_ORG }} \
+            -Dapigee.env=${{ vars.APIGEE_ENV }} \
+            -Dsa.email=${{ vars.GCP_SA_EMAIL }} \
+            -Dbearer=${{ steps.auth.outputs.access_token }}
+        # Note: plugin v2.4+ accepts -Dbearer directly for token-based auth
